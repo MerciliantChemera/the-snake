@@ -84,7 +84,6 @@ class Snake(GameObject):
 
     def reset(self):
         """Сброс змейки к начальным параметрам."""
-        print(f'Сбрасываем игру... Ваш счёт составил: {self.length} очков!')
         self.__init__()
 
     def draw(self):
@@ -129,7 +128,7 @@ class Snake(GameObject):
             (self.position[0] + self.direction[0]) % GRID_WIDTH,
             (self.position[1] + self.direction[1]) % GRID_HEIGHT
         )
-    
+
     def _update_direction(self):
         """Проверяет, была ли попытка изменения направления движения."""
         if self.next_direction:
