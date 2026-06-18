@@ -122,7 +122,7 @@ class Snake(GameObject):
 
     def get_next_head_position(self):
         """Определение следующей клетки поля, куда поползёт змейка."""
-        self._update_direction()
+        self.update_direction()
 
         return (
             (self.position[0] + self.direction[0]) % GRID_WIDTH,
@@ -133,7 +133,7 @@ class Snake(GameObject):
         """Возвращает текущее положение головы змейки."""
         return self.position
 
-    def _update_direction(self):
+    def update_direction(self):
         """Проверяет, была ли попытка изменения направления движения."""
         if self.next_direction:
             self.direction = self.next_direction
