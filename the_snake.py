@@ -1,4 +1,4 @@
-from random import choice, randint
+from random import randint
 import pygame
 
 # Размеры поля и сетки
