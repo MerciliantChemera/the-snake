@@ -1,4 +1,5 @@
 from random import randint
+
 import pygame
 
 # Размеры поля и сетки
@@ -33,19 +34,19 @@ running = True
 
 class GameObject:
     """Игровой объект, отрисовывающийся на поле."""
+
     def __init__(self):
         self.position = (GRID_WIDTH // 2, GRID_HEIGHT // 2)
         self.body_color = BOARD_BACKGROUND_COLOR
-    
+
     def draw(self):
         """Функция для отрисовки на экран."""
         pass
 
 
 class Apple(GameObject):
-    """Яблоко.
-    Цель для сбора змейкой. Может рандомизировать местоположение.
-    """
+    """Яблоко. Цель для сбора змейкой. Может рандомизировать позицию."""
+
     def __init__(self):
         super().__init__()
         self.body_color = APPLE_COLOR
@@ -69,6 +70,7 @@ class Apple(GameObject):
 
 class Snake(GameObject):
     """Змейка. Основной игровой персонаж."""
+
     def __init__(self):
         """TEST!"""
         super().__init__()
@@ -94,7 +96,7 @@ class Snake(GameObject):
             ))
             pygame.draw.rect(screen, self.body_color, rect)
             pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
-    
+
         head_rect = pygame.Rect(
             (self.position[0] * GRID_SIZE, self.position[1] * GRID_SIZE),
             (GRID_SIZE, GRID_SIZE)
@@ -108,7 +110,7 @@ class Snake(GameObject):
                 (GRID_SIZE, GRID_SIZE)
             )
             pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
-    
+
     def move(self, is_growing: bool = False):
         """Перемещает змейку в соответствии с текущим направлением движения.
         На вход принимает True, если необходимо увеличить змейку (на 1),
@@ -123,12 +125,10 @@ class Snake(GameObject):
         """Определение следующей клетки поля, куда поползёт змейка."""
         self._update_direction()
 
-        new_head_position = (
+        return (
             (self.position[0] + self.direction[0]) % GRID_WIDTH,
             (self.position[1] + self.direction[1]) % GRID_HEIGHT
         )
-
-        return new_head_position
     
     def _update_direction(self):
         """Проверяет, была ли попытка изменения направления движения."""
