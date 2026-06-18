@@ -128,7 +128,7 @@ class Snake(GameObject):
             (self.position[0] + self.direction[0]) % GRID_WIDTH,
             (self.position[1] + self.direction[1]) % GRID_HEIGHT
         )
-    
+
     def get_head_position(self):
         """Возвращает текущее положение головы змейки."""
         return self.position
