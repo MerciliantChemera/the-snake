@@ -96,8 +96,7 @@ class Apple(GameObject):
     ) -> None:
         super().__init__(color=color)
         if exclude_positions is None:
-            exclude_positions = []
-            exclude_positions.append(GRID_CENTER)
+            exclude_positions = [GRID_CENTER]
         self.randomize_position(exclude_positions)
 
     def randomize_position(
@@ -110,10 +109,10 @@ class Apple(GameObject):
                 random_x = randint(0, GRID_WIDTH - 1)
                 random_y = randint(0, GRID_HEIGHT - 1)
                 self.position = (random_x, random_y)
-    
+
     def draw(self) -> None:
         """Отрисовывает яблоко в его текущей позиции."""
-        self._draw_one(self.position, need_border = True)
+        self._draw_one(self.position, need_border=True)
 
 
 class Snake(GameObject):
@@ -138,10 +137,10 @@ class Snake(GameObject):
     def draw(self) -> None:
         """Отрисовка змейки."""
         for position in self.positions:
-            self._draw_one(position, need_border = True)
+            self._draw_one(position, need_border=True)
 
         if self.last:
-            self._draw_one(self.last, color = BOARD_BACKGROUND_COLOR)
+            self._draw_one(self.last, color=BOARD_BACKGROUND_COLOR)
 
     def move(self) -> None:
         """Перемещает змейку в текущем направлении движения."""
@@ -186,7 +185,7 @@ def main():
             player.length += 1
             if INCREASE_SPEED_DURING_GAME:
                 ticks_per_second = SPEED + player.length // 5
-            apple.randomize_position(excluded = player.positions)
+            apple.randomize_position(excluded=player.positions)
         # столкновение с собой
         elif player.get_head_position() in player.positions[1:]:
             screen.fill(BOARD_BACKGROUND_COLOR)
