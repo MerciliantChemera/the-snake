@@ -184,6 +184,8 @@ def main():
         # сбор яблока
         if player.position == apple.position:
             player.length += 1
+            if INCREASE_SPEED_DURING_GAME:
+                ticks_per_second = SPEED + player.length // 5
             apple.randomize_position(excluded = player.positions)
         # столкновение с собой
         elif player.get_head_position() in player.positions[1:]:
