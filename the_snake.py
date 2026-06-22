@@ -112,7 +112,7 @@ class Apple(GameObject):
     
     def draw(self) -> None:
         """Отрисовывает яблоко в его текущей позиции."""
-        self._draw_cell(self.position, need_border = True)
+        self._draw_cell(self.position, need_border=True)
 
 
 class Snake(GameObject):
@@ -189,6 +189,12 @@ class Snake(GameObject):
         Отключается движение и повороты змейки.
         """
         self._pause = not self._pause
+
+    def update_direction(self) -> None:
+        """Проверяет, была ли попытка изменения направления движения."""
+        if self.next_direction:
+            self.direction = self.next_direction
+            self.next_direction = None
 
 
 def main():
