@@ -13,6 +13,8 @@ GRID_CENTER = (GRID_WIDTH // 2, GRID_HEIGHT // 2)
 SPEED = 6
 # Увеличивать ли по ходу роста змейки
 INCREASE_SPEED_DURING_GAME = True
+# Увеличение за каждое яблоко
+SPEED_INCREMENT = 0.25
 
 # Направления движения
 UP = (0, -1)
@@ -21,21 +23,21 @@ LEFT = (-1, 0)
 RIGHT = (1, 0)
 UPDATE_ROTATION = {
     pg.K_UP: {
-        'vector': UP,
-        'conflicts': DOWN
-    },
+        'direction': UP,
+        'conflict': DOWN
+        },
     pg.K_DOWN: {
-        'vector': DOWN,
-        'conflicts': UP
-    },
+        'direction': DOWN,
+        'conflict': UP
+        },
     pg.K_LEFT: {
-        'vector': LEFT,
-        'conflicts': RIGHT
-    },
+        'direction': LEFT,
+        'conflict': RIGHT
+        },
     pg.K_RIGHT: {
-        'vector': RIGHT,
-        'conflicts': LEFT
-    }
+        'direction': RIGHT,
+        'conflict': LEFT
+        }
 }
 
 # Цвета
@@ -48,7 +50,6 @@ SNAKE_HEAD_COLOR = (25, 220, 25)
 screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
 pg.display.set_caption('Змейка')
 clock = pg.time.Clock()
-running = True
 
 
 class GameObject:
@@ -68,17 +69,16 @@ class GameObject:
         """Функция для отрисовки на экран. Должна быть переопределена."""
         raise NotImplementedError('Необходимо переопределить метод draw()')
 
-    def _draw_one(
+    def _draw_cell(
         self,
         position: tuple[int, int],
         color: tuple[int, int, int] | None = None,
         need_border: bool = False
     ) -> None:
         """Функция для отрисовки на экран одной ячейки заданного цвета."""
-        if color is None:
-            color = self.body_color
+        color = color or self.body_color
         rect = pg.Rect(
-            (position[0] * GRID_SIZE, position[1] * GRID_SIZE),
+            tuple(i * GRID_SIZE for i in position),
             (GRID_SIZE, GRID_SIZE)
         )
         pg.draw.rect(screen, color, rect)
@@ -96,72 +96,99 @@ class Apple(GameObject):
     ) -> None:
         super().__init__(color=color)
         if exclude_positions is None:
-            exclude_positions = []
-            exclude_positions.append(GRID_CENTER)
+            exclude_positions = [GRID_CENTER]
         self.randomize_position(exclude_positions)
 
     def randomize_position(
         self,
-        excluded: list[tuple[int, int]] | None = None
+        excluded_positions: list[tuple[int, int]] | None
     ) -> None:
         """Задаёт новую случайную позицию для яблока."""
-        if excluded is not None:
-            while self.position in excluded:
+        if excluded_positions is not None:
+            while self.position in excluded_positions:
                 random_x = randint(0, GRID_WIDTH - 1)
                 random_y = randint(0, GRID_HEIGHT - 1)
                 self.position = (random_x, random_y)
     
     def draw(self) -> None:
         """Отрисовывает яблоко в его текущей позиции."""
-        self._draw_one(self.position, need_border = True)
+        self._draw_cell(self.position, need_border = True)
 
 
 class Snake(GameObject):
-    """Змейка. Основной игровой персонаж."""
+    """Управляемое игроком существо - змейка."""
 
     def __init__(
         self,
         color: tuple[int, int, int] = SNAKE_COLOR
     ) -> None:
         super().__init__(color=color)
+        self.position = GRID_CENTER
         self.reset()
+
+    @staticmethod
+    def check_pause(func):
+        def wrapper(self, *args, **kwargs):
+            if not self._pause:
+                func(self, *args, **kwargs)
+            return None
+        return wrapper
 
     def reset(self) -> None:
         """Сброс змейки к начальным параметрам."""
         self.length = 1
-        self.position = GRID_CENTER
         self.positions = [self.position]
         self.direction = RIGHT
         self.next_direction = None
-        self.last = None
+        self._last = None
+        self._pause: bool = False
 
     def draw(self) -> None:
         """Отрисовка змейки."""
-        for position in self.positions:
-            self._draw_one(position, need_border = True)
+        self._draw_cell(self.get_head_position, need_border = True)
 
-        if self.last:
-            self._draw_one(self.last, color = BOARD_BACKGROUND_COLOR)
+        if self._last:
+            self._draw_cell(self._last, color = BOARD_BACKGROUND_COLOR)
+            self._last = None
 
+    @check_pause
     def move(self) -> None:
         """Перемещает змейку в текущем направлении движения."""
-        self.position = (
-            (self.position[0] + self.direction[0]) % GRID_WIDTH,
-            (self.position[1] + self.direction[1]) % GRID_HEIGHT
+        new_position = (
+            (self.get_head_position[0] + self.direction[0]) % GRID_WIDTH,
+            (self.get_head_position[1] + self.direction[1]) % GRID_HEIGHT
         )
-        self.positions.insert(0, self.position)
+        self.positions.insert(0, new_position)
         if self.length < len(self.positions):
-            self.last = self.positions.pop()
+            self._last = self.positions.pop()
 
+    @property
     def get_head_position(self) -> None:
         """Возвращает текущее положение головы змейки."""
-        return self.position
+        return self.positions[0]
 
+    @check_pause
     def update_direction(self) -> None:
-        """Проверяет, была ли попытка изменения направления движения."""
+        """Проверяет, была ли попытка изменения направления движения.
+
+        Буферная переменная next_direction необходима для
+        того, чтобы корректно обрабатывался ввод данных.
+        При попытке изменить значение напрямую, то между
+        тиками 'хода' змейки (функция move()) возможно изменить
+        направление движения несколько раз, что может привести
+        к развороту в противоположную сторону (и последующему
+        съеданию самого себя).
+        """
         if self.next_direction:
             self.direction = self.next_direction
             self.next_direction = None
+
+    def switch_pause(self) -> None:
+        """Переключить паузу в игре.
+
+        Отключается движение и повороты змейки.
+        """
+        self._pause = not self._pause
 
 
 def main():
@@ -169,51 +196,55 @@ def main():
     pg.init()
     screen.fill(BOARD_BACKGROUND_COLOR)
 
-    player = Snake()  # управляемое игроком существо - змейка
-    apple = Apple()  # цель для сбора игроком
+    snake = Snake()
+    apple = Apple()
 
     ticks_per_second = SPEED
 
-    while running:
+    while True:
         clock.tick(ticks_per_second)
 
-        handle_keys(player)
-        player.update_direction()
-        player.move()
+        handle_keys(snake)
+        snake.update_direction()
+        snake.move()
 
-        # сбор яблока
-        if player.position == apple.position:
-            player.length += 1
-            apple.randomize_position(excluded = player.positions)
-        # столкновение с собой
-        elif player.get_head_position() in player.positions[1:]:
+        if snake.get_head_position == apple.position:
+            snake.length += 1
+            apple.randomize_position(excluded_positions=snake.positions)
+            if INCREASE_SPEED_DURING_GAME:
+                ticks_per_second += SPEED_INCREMENT
+        elif snake.get_head_position in snake.positions[1:]:
+            # Поражение: змейка врезалась в себя.
             screen.fill(BOARD_BACKGROUND_COLOR)
-            player.reset()
-            apple.randomize_position()
+            snake.reset()
+            apple.randomize_position(excluded_positions=snake.positions)
 
-        player.draw()
+        snake.draw()
         apple.draw()
         pg.display.update()
 
 
 def handle_keys(game_object: GameObject) -> None:
-    """Функция обработки действий пользователя."""
+    """Функция обработки действий пользователя.
+
+    Управление змейкой реализовано при помощи 'клавиш-стрелок'.
+
+    При нажатии на 'пробел' ставится (снимается) пауза.
+    """
     for event in pg.event.get():
         if event.type == pg.QUIT:
             pg.quit()
             raise SystemExit
         if event.type == pg.KEYDOWN:
-            direction_info = UPDATE_ROTATION.get(event.key)
-            if direction_info is not None:
-                if game_object.direction != direction_info['conflicts']:
-                    # Буферная переменная next_direction необходима для
-                    # того, чтобы корректно обрабатывался ввод данных.
-                    # При попытке изменить значение напрямую, то между
-                    # тиками 'хода' змейки (функция move()) возможно изменить
-                    # направление движения несколько раз, что может привести
-                    # к развороту в противоположную сторону (и последующему
-                    # съеданию самого себя), что не возможно по правилам.
-                    game_object.next_direction = direction_info['vector']
+            # Поворот змейки
+            if event.key in (pg.K_UP, pg.K_DOWN, pg.K_LEFT, pg.K_RIGHT):
+                direction_info = UPDATE_ROTATION.get(event.key)
+                if game_object.direction != direction_info['conflict']:
+                    game_object.next_direction = direction_info['direction']
+            # Пауза
+            if event.key == pg.K_SPACE:
+                game_object.next_direction = None
+                game_object.switch_pause()
 
 
 if __name__ == '__main__':
