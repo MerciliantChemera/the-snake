@@ -25,19 +25,19 @@ UPDATE_ROTATION = {
     pg.K_UP: {
         'direction': UP,
         'conflict': DOWN
-        },
+    },
     pg.K_DOWN: {
         'direction': DOWN,
         'conflict': UP
-        },
+    },
     pg.K_LEFT: {
         'direction': LEFT,
         'conflict': RIGHT
-        },
+    },
     pg.K_RIGHT: {
         'direction': RIGHT,
         'conflict': LEFT
-        }
+    }
 }
 
 # Цвета
@@ -109,7 +109,7 @@ class Apple(GameObject):
                 random_x = randint(0, GRID_WIDTH - 1)
                 random_y = randint(0, GRID_HEIGHT - 1)
                 self.position = (random_x, random_y)
-    
+
     def draw(self) -> None:
         """Отрисовывает яблоко в его текущей позиции."""
         self._draw_cell(self.position, need_border=True)
@@ -128,6 +128,7 @@ class Snake(GameObject):
 
     @staticmethod
     def check_pause(func):
+        """Декоратор, обеспечивающий паузу."""
         def wrapper(self, *args, **kwargs):
             if not self._pause:
                 func(self, *args, **kwargs)
@@ -145,10 +146,10 @@ class Snake(GameObject):
 
     def draw(self) -> None:
         """Отрисовка змейки."""
-        self._draw_cell(self.get_head_position, need_border = True)
+        self._draw_cell(self.get_head_position, need_border=True)
 
         if self._last:
-            self._draw_cell(self._last, color = BOARD_BACKGROUND_COLOR)
+            self._draw_cell(self._last, color=BOARD_BACKGROUND_COLOR)
             self._last = None
 
     @check_pause
