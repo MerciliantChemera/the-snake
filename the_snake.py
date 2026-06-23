@@ -136,7 +136,7 @@ class Snake(GameObject):
         """Отрисовка змейки."""
         self._draw_cell(self.get_head_position, need_border=True)
 
-        if self._last and self._last not in self.positions:
+        if self._last:
             self._draw_cell(self._last, color=BOARD_BACKGROUND_COLOR)
 
     def move(self) -> None:
@@ -147,7 +147,8 @@ class Snake(GameObject):
         )
         self.positions.insert(0, new_position)
         if self.length < len(self.positions):
-            self._last = self.positions.pop()
+            tail = self.positions.pop()
+            self._last = None if (tail == new_position) else tail
         else:
             self._last = None
 
@@ -171,13 +172,6 @@ class Snake(GameObject):
             self.direction = self.next_direction
             self.next_direction = None
 
-    def switch_pause(self) -> None:
-        """Переключить паузу в игре.
-
-        Отключается движение и повороты змейки.
-        """
-        self._pause = not self._pause
-
 
 def main():
     """Основное тело программы."""
@@ -188,12 +182,17 @@ def main():
     apple = Apple(snake.positions)
 
     ticks_per_second = SPEED
+
+    # Неокончательная реализация.
+    # TODO: в идеале реализовать содержимое функции main()
+    # в отдельный класс (прим. SnakeGameController)
+    global pause
     pause = False
 
     while True:
         clock.tick(ticks_per_second)
 
-        handle_keys(snake, pause)
+        handle_keys(snake)
         if not pause:
             snake.update_direction()
             snake.move()
@@ -216,13 +215,14 @@ def main():
             pg.display.update()
 
 
-def handle_keys(snake: Snake, pause: bool) -> None:
+def handle_keys(snake: Snake) -> None:
     """Функция обработки действий пользователя.
 
     Управление змейкой реализовано при помощи 'клавиш-стрелок'.
 
     При нажатии на 'пробел' ставится (снимается) пауза.
     """
+    global pause
     for event in pg.event.get():
         if event.type == pg.QUIT:
             pg.quit()
