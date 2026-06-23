@@ -92,11 +92,10 @@ class Apple(GameObject):
 
     def __init__(
         self,
-        exclude_positions: list[tuple[int, int]] = [GRID_CENTER],
         color: tuple[int, int, int] = APPLE_COLOR
     ) -> None:
         super().__init__(color=color)
-        self.randomize_position(exclude_positions)
+        self.randomize_position([GRID_CENTER])
 
     def randomize_position(
         self,
@@ -179,7 +178,7 @@ def main():
     screen.fill(BOARD_BACKGROUND_COLOR)
 
     snake = Snake()
-    apple = Apple(snake.positions)
+    apple = Apple()
 
     ticks_per_second = SPEED
 
