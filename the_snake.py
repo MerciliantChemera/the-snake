@@ -92,7 +92,7 @@ class Apple(GameObject):
 
     def __init__(
         self,
-        exclude_positions: list[tuple[int, int]],
+        exclude_positions: list[tuple[int, int]] = [GRID_CENTER],
         color: tuple[int, int, int] = APPLE_COLOR
     ) -> None:
         super().__init__(color=color)
